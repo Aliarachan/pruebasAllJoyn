@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.cantor.pruebamultiplayer">
+
+    <!-- Permisos que necesitamos -->
+    <uses-permission android:name="android.permission.INTERNET"></uses-permission>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"></uses-permission>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"></uses-permission>
+
+    <!-- SI NO PONEMOS EL NOMBRE DE LA APLICACION TAMBIEN PETA -->
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme"
+        android:name=".ChatApplication">
+        <activity android:name=".ChooseRoomActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ChatRoomActivity"></activity>
+
+        <!-- ES MUY IMPORTANTE PONER ESTO!!! QUE SI NO NO FUNCIONA LEÑE!!! -->
+        <!-- IT'S NOT WHO YOU ARE UNDERNEATH, BUT WHAT YOU DO THAT DEFINES YOU -->
+        <service
+            android:name="AllJoynService">
+        </service>service>
+    </application>
+
+</manifest>
