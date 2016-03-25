@@ -198,6 +198,7 @@ public class AllJoynService extends Service implements Observer {
             Message message = mHandler.obtainMessage(HANDLE_OUTBOUND_CHANGED_EVENT);
             mHandler.sendMessage(message);
         }
+
     }
 
     /**
@@ -268,11 +269,13 @@ public class AllJoynService extends Service implements Observer {
                     mBackgroundHandler.sendMessages();
                 }
                 break;
+
             default:
                 break;
             }
         }
     };
+
 
     /**
      * Value for the HANDLE_APPLICATION_QUIT_EVENT case observer notification handler.

@@ -98,8 +98,9 @@ public class ChatApplication extends Application implements Observable {
 
     ComponentName mRunningService = null;
 
+
     /**
-     * Since our application is "rooted" in this class derived from Appliation
+     * Since our application is "rooted" in this class derived from Application
      * and we have a long-running service, we can't just call finish in one of
      * the Activities.  We have to orchestrate it from here.  We send an event
      * notification out to all of our obsservers which tells them to exit.
@@ -617,6 +618,16 @@ public class ChatApplication extends Application implements Observable {
     }
 
     /**
+     * When a room is created, we need to notify the observers that they must
+     * refresh their listview with a list of the active lobbies
+     */
+    public void refreshLobbies(){
+        notifyObservers(REFRESH_LOBBIES);
+    }
+
+    public static final String REFRESH_LOBBIES = "REFRESH_LOBBIES";
+
+    /**
      * This object is really the model of a model-view-controller architecture.
      * The observer/observed design pattern is used to notify view-controller
      * objects when the model has changed.  The observed object is this object,
@@ -641,6 +652,7 @@ public class ChatApplication extends Application implements Observable {
         Log.i(TAG, "deleteObserver(" + obs + ")");
         mObservers.remove(obs);
     }
+
 
     /**
      * This object is really the model of a model-view-controller architecture.
