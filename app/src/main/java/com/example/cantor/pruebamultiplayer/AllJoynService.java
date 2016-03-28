@@ -48,8 +48,13 @@ import android.content.Intent;
 
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class AllJoynService extends Service implements Observer {
     private static final String TAG = "chat.AllJoynService";
+    private static ConcurrentHashMap<String, UserInterface> batUsers;
+    private static User user;
 
     /**
      * We don't use the bindery to communiate between any client and this
@@ -73,6 +78,8 @@ public class AllJoynService extends Service implements Observer {
         startBusThread();
         mChatApplication = (ChatApplication)getApplication();
         mChatApplication.addObserver(this);
+        user = mChatApplication.getUser();
+        batUsers = mChatApplication.getListUsers();
 
         CharSequence title = "AllJoyn";
         CharSequence message = "Chat Channel Hosting Service.";
@@ -93,6 +100,8 @@ public class AllJoynService extends Service implements Observer {
          */
         mBackgroundHandler.connect();
         mBackgroundHandler.startDiscovery();
+
+        batUsers = mChatApplication.getListUsers();
     }
 
     private static final int NOTIFICATION_ID = 0xdefaced;
@@ -559,7 +568,7 @@ public class AllJoynService extends Service implements Observer {
                 doLeaveSession();
                 break;
             case SEND_MESSAGES:
-                doSendMessages();
+                //doSendMessages();
                 break;
             case EXIT:
                 getLooper().quit();
@@ -715,7 +724,7 @@ public class AllJoynService extends Service implements Observer {
          * object path.  Our service is implemented by the ChatService
          * BusObject found at the "/chatService" object path.
          */
-        Status status = mBus.registerBusObject(mChatService, OBJECT_PATH);
+        Status status = mBus.registerBusObject(user, OBJECT_PATH);
         if (Status.OK != status) {
             mChatApplication.alljoynError(ChatApplication.Module.HOST, "Unable to register the chat bus object: (" + status + ")");
             return;
@@ -746,6 +755,17 @@ public class AllJoynService extends Service implements Observer {
     private boolean doDisconnect() {
         Log.i(TAG, "doDisonnect()");
         assert(mBusAttachmentState == BusAttachmentState.CONNECTED);
+        mBus.unregisterBusObject(user
+
+
+
+
+
+
+
+
+
+        );
         mBus.unregisterBusListener(mBusListener);
         mBus.disconnect();
         mBusAttachmentState = BusAttachmentState.DISCONNECTED;
@@ -1091,6 +1111,8 @@ public class AllJoynService extends Service implements Observer {
         SessionOpts sessionOpts = new SessionOpts(SessionOpts.TRAFFIC_MESSAGES, true, SessionOpts.PROXIMITY_ANY, SessionOpts.TRANSPORT_ANY);
         Mutable.IntegerValue sessionId = new Mutable.IntegerValue();
 
+        SignalEmitter emitter = new SignalEmitter(user, mUseSessionId, SignalEmitter.GlobalBroadcast.Off);
+        final UserInterface batUserInterface = emitter.getInterface(UserInterface.class);
         Status status = mBus.joinSession(wellKnownName, contactPort, sessionId, sessionOpts, new SessionListener() {
             /**
              * This method is called when the last remote participant in the
@@ -1109,6 +1131,61 @@ public class AllJoynService extends Service implements Observer {
                 mUseChannelState = UseChannelState.IDLE;
                 mChatApplication.useSetChannelState(mUseChannelState);
             }
+
+            public void sessionMemberAdded(int sessionId, String uniqueName){
+                int size = batUsers.size();
+                switch(size){
+                    case 0:
+                        try {
+                            batUserInterface.setName("R");
+                            batUsers.put("R", batUserInterface);
+                        } catch (BusException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case 1:
+                        try {
+                            batUserInterface.setName("G");
+                            batUsers.put("G", batUserInterface);
+                        } catch (BusException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case 2:
+                        try {
+                            batUserInterface.setName("B");
+                            batUsers.put("B", batUserInterface);
+                        } catch (BusException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case 3:
+                        try {
+                            batUserInterface.setName("Y");
+                            batUsers.put("Y", batUserInterface);
+                        } catch (BusException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    default:
+                        try {
+                            batUserInterface.forceDisconnect();
+                        } catch (BusException e) {
+                            e.printStackTrace();
+                        }
+                        doDisconnect();
+                        break;
+                }
+
+                ArrayList<UserInterface> tmp = new ArrayList<>(batUsers.values());
+                for (UserInterface batInterface: tmp){
+                    try {
+                        batInterface.sendMessageRefreshPlayers();
+                    } catch (BusException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
         });
 
         if (status == Status.OK) {
@@ -1119,17 +1196,12 @@ public class AllJoynService extends Service implements Observer {
             return;
         }
 
-        SignalEmitter emitter = new SignalEmitter(mChatService, mUseSessionId, SignalEmitter.GlobalBroadcast.Off);
-        mChatInterface = emitter.getInterface(ChatInterface.class);
+
 
         mUseChannelState = UseChannelState.JOINED;
         mChatApplication.useSetChannelState(mUseChannelState);
     }
 
-    /**
-     * This is the interface over which the chat messages will be sent.
-     */
-    ChatInterface mChatInterface = null;
 
     /**
      * Implementation of the functionality related to joining an existing
@@ -1157,21 +1229,13 @@ public class AllJoynService extends Service implements Observer {
      * an existing remote session.  Note that we always send all of the
      * messages on the outbound queue, so there may be instances where this
      * method is called and we find nothing to send depending on the races.
-     */
+
     private void doSendMessages() {
         Log.i(TAG, "doSendMessages()");
 
         String message;
         while ((message = mChatApplication.getOutboundItem()) != null) {
             Log.i(TAG, "doSendMessages(): sending message \"" + message + "\"");
-            /*
-             * If we are joined to a remote session, we send the message over
-             * the mChatInterface.  If we are implicityly joined to a session
-             * we are hosting, we send the message over the mHostChatInterface.
-             * The mHostChatInterface may or may not exist since it is created
-             * when the sessionJoined() callback is fired in the
-             * SessionPortListener, so we have to check for it.
-             */
             try {
                 if (mJoinedToSelf) {
                     if (mHostChatInterface != null) {
@@ -1185,6 +1249,8 @@ public class AllJoynService extends Service implements Observer {
             }
         }
     }
+
+    */
 
     /**
      * Our chat messages are going to be Bus Signals multicast out onto an

@@ -29,6 +29,7 @@ public class JoinLobbyActivity extends AppCompatActivity implements Observer{
         //Set item click listener
         //El usuario entra en la sale que tiene nombre XXX
         //Joinchannel
+        batApplication.setHandler(mHandler);
         batList.setOnItemClickListener(new ListView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String name = batList.getItemAtPosition(position).toString();
@@ -96,7 +97,7 @@ public class JoinLobbyActivity extends AppCompatActivity implements Observer{
                     //alljoynError();
                     //We could put an error here
                     //Salta por ejemplo si intentamos crear una sala sin nombre (nombre vacio)
-                    CharSequence text = "Error =(";
+                    CharSequence text = "Error join";
 
                     Toast toast = Toast.makeText(JoinLobbyActivity.this, text, Toast.LENGTH_SHORT);
                     toast.show();

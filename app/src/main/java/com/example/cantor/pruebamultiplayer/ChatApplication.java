@@ -26,7 +26,10 @@ import android.app.Application;
 import android.content.ComponentName;
 import android.content.Intent;
 
+import android.os.Handler;
 import android.util.Log;
+
+import org.alljoyn.bus.BusException;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -36,6 +39,7 @@ import java.util.Date;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The ChatAppliation class serves as the Model (in the sense of the common
@@ -81,6 +85,12 @@ import java.text.SimpleDateFormat;
 public class ChatApplication extends Application implements Observable {
     private static final String TAG = "chat.ChatApplication";
     public static String PACKAGE_NAME;
+    private static ConcurrentHashMap<String, UserInterface> users;
+    private static User user;
+
+
+
+    private static Handler batHandler;
     /**
      * When created, the application fires an intent to create the AllJoyn
      * service.  This acts as sort of a combined view/controller in the
@@ -88,22 +98,58 @@ public class ChatApplication extends Application implements Observable {
      */
     public void onCreate() {
         Log.d(TAG, "onCreate()");
+        user = new User();
+        users = new ConcurrentHashMap<String, UserInterface>();
         PACKAGE_NAME = getApplicationContext().getPackageName();
         Intent intent = new Intent(this, AllJoynService.class);
         mRunningService = startService(intent);
         if (mRunningService == null) {
             Log.i(TAG, "onCreate(): failed to startService()");
         }
+
     }
 
     ComponentName mRunningService = null;
+
+    public ConcurrentHashMap<String, UserInterface> getListUsers(){
+        return users;
+    }
+
+    public User getUser(){
+        return user;
+    }
+
+    public void setUser(User user){
+        this.user = user;
+    }
+
+    public static Handler getHandler() {
+        return batHandler;
+    }
+
+    public static void setHandler(Handler batHandler) {
+        ChatApplication.batHandler = batHandler;
+    }
+
+    public ArrayList getUsersName(){
+        ArrayList<String> tmp = new ArrayList<String>();
+        ArrayList<UserInterface> tmp2 = new ArrayList<>(users.values());
+        for (UserInterface batUser: tmp2){
+            try {
+                tmp.add(batUser.getName());
+            } catch (BusException e) {
+                e.printStackTrace();
+            }
+        }
+        return tmp;
+    }
 
 
     /**
      * Since our application is "rooted" in this class derived from Application
      * and we have a long-running service, we can't just call finish in one of
      * the Activities.  We have to orchestrate it from here.  We send an event
-     * notification out to all of our obsservers which tells them to exit.
+     * notification out to all of our observers which tells them to exit.
      *
      * Note that as a result of the notification, all of the observers will
      * stop -- as they should.  One of the things that will stop is the AllJoyn
@@ -626,8 +672,6 @@ public class ChatApplication extends Application implements Observable {
     }
 
     public static final String REFRESH_LOBBIES = "REFRESH_LOBBIES";
-
-    public void
 
     /**
      * This object is really the model of a model-view-controller architecture.
