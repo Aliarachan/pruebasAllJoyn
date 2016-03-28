@@ -25,7 +25,7 @@ public class JoinLobbyActivity extends AppCompatActivity implements Observer{
         batApplication.checkin();
         batApplication.addObserver(this);
 
-        final ListView batList = (ListView)findViewById(R.id.ListViewRooms);
+        final ListView batList = (ListView)findViewById(R.id.listViewLobbies);
         //Set item click listener
         //El usuario entra en la sale que tiene nombre XXX
         //Joinchannel
@@ -36,6 +36,7 @@ public class JoinLobbyActivity extends AppCompatActivity implements Observer{
                 batApplication.useJoinChannel();
                 Intent batIntent = new Intent(JoinLobbyActivity.this, CreateLobbyActivity.class);
                 batIntent.putExtra("tmpID", 1);
+                batIntent.putExtra("roomName", name);
                 startActivity(batIntent);
             }
         });
@@ -60,7 +61,7 @@ public class JoinLobbyActivity extends AppCompatActivity implements Observer{
     }
 
     private void updateLobbies() {
-        ListView batList = (ListView)findViewById(R.id.ListViewRooms);
+        ListView batList = (ListView)findViewById(R.id.listViewLobbies);
         ArrayAdapter<String> channelListAdapter = new ArrayAdapter<String>(this, android.R.layout.test_list_item);
         batList.setAdapter(channelListAdapter);
         //Encontramos los nombres de las salas que hemos creado

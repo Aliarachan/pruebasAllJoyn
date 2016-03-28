@@ -627,6 +627,8 @@ public class ChatApplication extends Application implements Observable {
 
     public static final String REFRESH_LOBBIES = "REFRESH_LOBBIES";
 
+    public void
+
     /**
      * This object is really the model of a model-view-controller architecture.
      * The observer/observed design pattern is used to notify view-controller
